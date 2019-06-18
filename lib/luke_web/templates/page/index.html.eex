@@ -1,36 +1,928 @@
-<div class="jumbotron">
-  <h2><%= gettext "Welcome to %{name}!", name: "Phoenix" %></h2>
-  <p class="lead">A productive web framework that<br />does not compromise speed and maintainability.</p>
-</div>
+<html>
+  <head>
+    <title>Ghini - Taxasoft BG</title>
+    <meta name="author" content="Mario Frasca" >
+    <meta name="copyright" content="Mario Frasca">
+    <meta name="License" content="AGPL3">
+    <meta name="description" content="">
+    <meta name="ROBOTS" content="NOINDEX, NOFOLLOW">
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="content-type" content="application/xhtml+xml; charset=UTF-8">
+    <meta http-equiv="content-style-type" content="text/css">
+    <meta http-equiv="expires" content="0">
 
-<div class="row marketing">
-  <div class="col-lg-6">
-    <h4>Resources</h4>
-    <ul>
-      <li>
-        <a href="http://phoenixframework.org/docs/overview">Guides</a>
-      </li>
-      <li>
-        <a href="https://hexdocs.pm/phoenix">Docs</a>
-      </li>
-      <li>
-        <a href="https://github.com/phoenixframework/phoenix">Source</a>
-      </li>
-    </ul>
-  </div>
 
-  <div class="col-lg-6">
-    <h4>Help</h4>
-    <ul>
-      <li>
-        <a href="http://groups.google.com/group/phoenix-talk">Mailing list</a>
-      </li>
-      <li>
-        <a href="http://webchat.freenode.net/?channels=elixir-lang">#elixir-lang on freenode IRC</a>
-      </li>
-      <li>
-        <a href="https://twitter.com/elixirphoenix">@elixirphoenix</a>
-      </li>
-    </ul>
-  </div>
-</div>
+    <!-- CSS libraries-->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-datepicker.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="/static/css/font-awesome.min.css" crossorigin="anonymous">
+    <link href="/static/css/select2.min.css" type="text/css" media="screen" rel="stylesheet">
+    <!-- ./ CSS libraries-->
+
+    <!-- JS libraries -->
+    <script src="/static/js/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+    <script src="/static/js/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="/static/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="/static/js/bootstrap-datepicker.min.js" integrity="sha256-tW5LzEC7QjhG0CiAvxlseMTs2qJS7u3DRPauDjFJ3zo=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="/static/js/select2.min.js"></script>
+    <script type="text/javascript" src="/static/js/django_select2.js"></script>
+    <!-- ./ JS libraries -->
+    <script>
+function uuid4() { // Public Domain/MIT
+    var d = new Date().getTime();
+    if (typeof performance !== 'undefined' && typeof performance.now === 'function'){
+        d += performance.now(); //use high-precision timer if available
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = (d + Math.random() * 16) % 16 | 0;
+        d = Math.floor(d / 16);
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+}
+$(function() {  // run at document ready
+    'use strict';
+
+    //  ValueError :: String -> Error
+    function ValueError(message) {
+        var err = new Error (message);
+        err.name = 'ValueError';
+        return err;
+    }
+
+    //  create :: Object -> String,*... -> String
+    function create(transformers) {
+        return function(template) {
+            var args = Array.prototype.slice.call (arguments, 1);
+            var idx = 0;
+            var state = 'UNDEFINED';
+
+            return template.replace (
+                /([{}])\1|[{](.*?)(?:!(.+?))?[}]/g,
+                function(match, literal, _key, xf) {
+                    if (literal != null) {
+                        return literal;
+                    }
+                    var key = _key;
+                    if (key.length > 0) {
+                        if (state === 'IMPLICIT') {
+                            throw ValueError ('cannot switch from ' +
+                                              'implicit to explicit numbering');
+                        }
+                        state = 'EXPLICIT';
+                    } else {
+                        if (state === 'EXPLICIT') {
+                            throw ValueError ('cannot switch from ' +
+                                              'explicit to implicit numbering');
+                        }
+                        state = 'IMPLICIT';
+                        key = String (idx);
+                        idx += 1;
+                    }
+
+                    //  1.  Split the key into a lookup path.
+                    //  2.  If the first path component is not an index, prepend '0'.
+                    //  3.  Reduce the lookup path to a single result. If the lookup
+                    //      succeeds the result is a singleton array containing the
+                    //      value at the lookup path; otherwise the result is [].
+                    //  4.  Unwrap the result by reducing with '' as the default value.
+                    var path = key.split ('.');
+                    var value = (/^\d+$/.test (path[0]) ? path : ['0'].concat (path))
+                        .reduce (function(maybe, key) {
+                            return maybe.reduce (function(_, x) {
+                                return x != null && key in Object (x) ?
+                                       [typeof x[key] === 'function' ? x[key] () : x[key]] :
+                                       [];
+                            }, []);
+                        }, [args])
+                        .reduce (function(_, x) { return x; }, '');
+
+                    if (xf == null) {
+                        return value;
+                    } else if (Object.prototype.hasOwnProperty.call (transformers, xf)) {
+                        return transformers[xf] (value);
+                    } else {
+                        throw ValueError ('no transformer named "' + xf + '"');
+                    }
+                }
+            );
+        };
+    }
+
+    //  format :: String,*... -> String
+    var format = create ({});
+
+    //  format.create :: Object -> String,*... -> String
+    format.create = create;
+
+    //  format.extend :: Object,Object -> ()
+    format.extend = function(prototype, transformers) {
+        var $format = create (transformers);
+        prototype.format = function() {
+            var args = Array.prototype.slice.call (arguments);
+            args.unshift (this);
+            return $format.apply (this, args);
+        };
+    };
+
+    /* istanbul ignore if */
+    format.extend (String.prototype, {});
+
+});
+    </script>
+    <style>
+     .btn-separator:after {
+         content: ' ';
+         display: block;
+         float: left;
+         margin: 0 3px;
+         height: 34px;
+         width: 0px;
+     }
+    </style>
+    <style TYPE="text/css">
+     <!--
+     span.side, span.sub {
+         font-size: small;
+     }
+     span.side {
+         margin: 2px 0 0 20px;
+     }
+     span.content, span.sub {
+         margin: 0 0 0 5px;
+     }
+     span.content {
+         font-weight: bold;
+     }
+     -->
+    </style>
+    <script type="text/javascript">
+     var search_history, forward_history;
+     var csrf_token;
+     var current_url;
+     var tokens = {};
+     var twolinestemplate='<td><div class="row"><span class="content">{0.item}</span><span class="side">{0.side}</span></div><div class="row"><span class="sub">{0.sub}</span></div></td>';
+     var pictures_window;
+
+     var collection_icon = {
+         'Taxon': 'terminal',
+         'Accession': 'vcard-o',
+         'Contact': 'user-circle',
+         'Plant': 'tree',
+         'Location': 'umbrella'
+     }
+
+     function partial(func, ...argsBound) {
+         return function(...args) {
+             return func.call(this, ...argsBound, ...args);
+         }
+     }
+
+     function replace_search_filter(value, e) {
+         $('#search-filter').val(value);
+         $('#search-filter-button').trigger('click');
+     }
+
+     function replace_tbody_with_dictionary(tbody, url, data) {
+         if(url !== current_url) {
+             console.log('got answer for »{}« while we moved to »{}«'.format(url, current_url))
+             return;
+         }
+         tbody.empty();
+         var tr, td, is_collapsible, btn, target_id, additional, div0;
+         jQuery.each(data, function(key, value) {
+             if (!key.startsWith('__') && value !== null && value !== '') {
+                 tr = $("<tr></tr>");
+                 tbody.append(tr);  // add it as last child
+                 if (key.endsWith('+')) {
+                     key = key.slice(0, -1);
+                     target_id = 'info-{}'.format(key);
+                     additional = ' id="{}" class="collapse"'.format(target_id);
+                     btn = $('<button style="margin-left:10px" class="fa fa-plus-square-o" data-toggle="collapse" data-target="#{}"></button>'.format(target_id));
+                 } else {
+                     additional = '';
+                     btn = undefined;
+                 }
+                 tr.append($('<td width="40%">' + key.replace('_', ' ') + '</td>'));
+                 if(btn)
+                     $(tr).find('td').append(btn);
+                 td = $('<td></td>');
+                 tr.append(td);
+                 if(value[0] === 'link') {
+                     if (typeof value[1] === 'string' || typeof value[1] === 'number') {  // single element
+                         div0 = $('<div{}>{}</div>'.format(additional, value[1]));
+                         td.append(div0);
+                         div0.addClass('list-group-item-action');
+                         div0.click(partial(replace_search_filter, value[2]));
+                         if(value[3] !== undefined)
+                             div0.attr('title', value[3]);
+                     } else {  // list of links
+                         div0 = $('<div{}></div>'.format(additional))
+                         td.append(div0);
+                         var div;
+                         jQuery.each(value[1], function(i, x) {
+                             div = $('<div>{}</div>'.format(x[0]))
+                             div.addClass('list-group-item-action');
+                             div.click(partial(replace_search_filter, x[1]));
+                             if(x[2] !== undefined)
+                                 div.attr('title', x[2]);
+                             div0.append(div)
+                         })
+                     }
+                 } else {
+                     td.append($('<div{}>{}</div>'.format(additional, value)));
+                 }
+             }
+         });
+         if (typeof e !== 'undefined')
+             $(e.delegateTarget).removeAttr("disabled");
+     }
+
+     function update_infobox(url, e) {
+         if (typeof e !== 'undefined')
+             $(e.delegateTarget).attr("disabled", "disabled");
+         if (url === current_url) {
+             return;
+         }
+         current_url = url;
+         window.open(url.replace('infobox/', 'carousel/'), 'pictures');
+         $('tr').removeClass('table-success');
+         if (typeof e !== 'undefined') {
+             $('#infobox-object-text').empty();
+             $('#infobox-object-text').append($(e.delegateTarget).find('span.content').clone());
+             $(e.delegateTarget).addClass('table-success');
+         }
+         $('#infobox-table tbody').empty();
+         if(url.match('taxonomy/taxon/')) {
+             $.getJSON(url.replace('infobox/', 'rac/'),
+                       partial(replace_tbody_with_dictionary, $('#infobox-rac-tbody'), url));
+         }
+         $.getJSON(url, partial(replace_tbody_with_dictionary, $('#infobox-main-tbody'), url));
+     }
+
+     if (!Array.prototype.last){
+         Array.prototype.last = function(){
+             return this[this.length - 1];
+         };
+     };
+
+     function clean_history(e) {
+         tokens = {};
+         $.getJSON("{% url 'drop-token' '__all__' %}", function(data) {});
+         search_history.length = 0;
+         forward_history.length = 0;
+         $('#search-filter').val('');
+         $('#infobox-object-text').empty();
+         $('#infobox-table tbody').empty();
+         $('#results-box tbody').empty();
+         current_url = undefined;
+     }
+
+     function pay_token(tbody, class_name, token, first_td) {
+         var itr, itd, ispan, btn;
+         $.getJSON("{% url 'cash-token' 'TK' %}".replace('TK', token), function(data) {
+             console.log(data);
+             $('div#results-page .progress-bar.{}'.format(class_name)).attr('data-expect', data.expect);
+             var read_so_far = parseInt($('div#results-page .progress-bar.{}'.format(class_name)).attr('data-read-so-far'));
+             var total_expected = sumDataEntries('div#results-page .progress-bar', 'expect');
+             var processed = 0;
+             jQuery.each(data['chunk'], function(index, item) {
+                 read_so_far += 1;
+                 $('div#results-page .progress-bar.{}'.format(class_name))
+                     .css('width', "{}%".format(100 * read_so_far / total_expected));
+                 itr = $('<tr class="{}-row"></tr>'.format(class_name));
+                 $(itr).attr('data-infobox-url', item.infobox_url);
+                 $(itr).attr('data-form-url', item.infobox_url.replace('infobox/', 'form/'));
+                 itr.click(partial(update_infobox, item.infobox_url));
+                 itd = $(twolinestemplate.format(item.twolines))
+                 itr.append(itd);
+                 itd = $('<td style="text-align:end;"></td>');
+                 itr.append(itd);
+                 ispan = $('<i style="width:0px;"></i>')
+                 itd.append(ispan)
+                 btn = $('<button class="fa fa-search"></button>')
+                 ispan.append(btn)
+                 $(btn).click(look_for_depending)
+                 if (first_td) {
+                     $(itd).trigger('click');
+                     first_td = false;
+                 }
+                 processed++;
+                 if(tokens[token] !== true) {
+                     console.log('dropping tokens')
+                     $.getJSON("{% url 'drop-token' 'TK' %}".replace('TK', token), function(data) {});
+                     $('div#results-page .progress-bar.{}'.format(class_name)).attr('data-expect', '0');
+                     processed=0;
+                     return false;
+                 }
+                 tbody.append(itr);  // add it as last child
+             })
+             $('div#results-page .progress-bar.{}'.format(class_name)).attr('data-read-so-far', read_so_far);
+             $('div#results-box tr.{}-row'.format(class_name)).contextmenu(
+                 partial(function(class_name, e) {
+                     $(e.delegateTarget).trigger('click');
+                     $('#ContextMenu-' + class_name).css({
+                         display: "block",
+                         left: e.pageX - 4,
+                         top: e.pageY - 6
+                     });
+                     return false;
+                 }, class_name));
+             if (processed !== 0 && data.done !== true) {
+                 // set Timeout for async iteration
+                 setTimeout(partial(pay_token, tbody, class_name, token, false), 1);
+             } else {
+                 setTimeout(function(){
+                     var total_expected = sumDataEntries('div#results-page .progress-bar', 'expect');
+                     var read_so_far = sumDataEntries('div#results-page .progress-bar', 'read-so-far');
+                     if(total_expected === read_so_far) {
+                         $('div#results-page .row.progress').hide();
+                     }
+                 }, 1250);
+             }
+         })
+     }
+
+     function look_for_depending(e) {
+         var td = $(e.delegateTarget).closest('td')
+         var tr = $(td.closest('tr'))
+         var span = $(td).find('i')
+         span.empty()
+         span.append($('<div class="spinner-border text-primary"></div>'));
+         var basename = $(tr).data('infobox-url').replace('/', '').replace('/infobox/', '').replace(/[\/\.%]/g, '-')
+         var depending_url = $(tr).data('infobox-url').replace('infobox/', 'depending/')
+         $.getJSON(depending_url, function(data) {
+             span.empty()
+             var btn, next, tbody, itr, ispan;
+             jQuery.each(data, function(class_name, token) {
+                 tokens[token] = true;
+                 btn = $('<button class="fa fa-{2}" data-toggle="collapse" data-target="#{0}-{1}"></button>'
+                     .format(basename, class_name, collection_icon[class_name]));
+                 $(span).append(btn)
+                 next = $('<tr id="{0}-{1}" class="collapse as-of-{0}"></tr>'.format(basename, class_name))
+                 $(tr).after(next)
+                 next.append($('<td colspan="2" style="padding:0;padding-left:1.25rem;"><table width="100%"><tbody></tbody></table></td>'))
+                 tbody = $(next).find('tbody')
+                 pay_token(tbody, class_name, token, false);
+             })
+
+         })
+     }
+
+     function now() {
+         return new Date().getTime();
+     }
+
+     function sumDataEntries(q, data_field) {
+         function dtz(x) {
+             return parseInt(x) || 0;
+         }
+         return Object.values($(q).map(function(index, obj) {
+             return($(obj).attr('data-' + data_field))
+         })).reduce((a, b) => dtz(a) + dtz(b));
+     }
+
+     function lookup(e, term) {
+         tokens = {};
+         $.getJSON("{% url 'drop-token' '__all__' %}", function(data) {});
+         $('.search-filter').attr("disabled", "disabled");
+         $('div.pager-page').hide()
+         $('div#results-page').show()
+         reset_results_height()
+         if(term === undefined) {
+             term = $('#search-filter').val();
+             if(search_history.last() !== term && forward_history.last() !== term)
+                 search_history.push(term);
+         } else {
+             $('#search-filter').val(term);
+         }
+         $('#infobox-object-text').empty();
+         $('#infobox-table tbody').empty();
+         current_url = undefined;
+         $('#results-box tbody').empty();
+
+         $('div#results-page .progress-bar').css('width', '0%');
+         $('div#results-page .progress-bar').attr('data-read-so-far', '0');
+         $('div#results-page .progress-bar').attr('data-expect', '0');
+         api_url = "/url/get-tokens?q=" + $('#search-filter').val();
+         $.getJSON(api_url, function(data) {
+             console.log(data);
+             var activate_first_td = true;
+             var tbody;
+             jQuery.each(data, function(class_name, token) {
+                 tbody = $('#results-box .{}'.format(class_name));
+                 tbody.empty();
+                 tokens[token] = true;
+                 $('div#results-page .row.progress').show()
+                 pay_token(tbody, class_name, token, activate_first_td);
+                 activate_first_td = false;
+             });
+             $('.search-filter').removeAttr("disabled");
+
+             $('body').on("click", function() {
+                 $('.context-menu').hide();
+             });
+         })
+     }
+
+     function follow_history(to_pop, to_push, e) {
+         if(to_pop.length !== 0) {
+             var term = to_pop.pop();
+             to_push.push(term);
+             if ($('#search-filter').val() === term && to_pop.length !== 0) {
+                 term = to_pop.pop();
+                 to_push.push(term);
+             }
+
+             lookup(e, term);
+         }
+     }
+
+     function compute_api_url(form_url, parent_class, this_class, http_verb) {
+         if (http_verb === 'POST') {
+             if (this_class === 'plant' && parent_class === 'accession')
+                 return form_url.replace('collection/', 'garden/').replace('form/', 'plant/')
+             if (this_class === 'verification' && parent_class === 'accession')
+                 return form_url.replace('form/', 'verification/')
+         }
+         return form_url.replace('/form/', '/').replace('//', '/')
+     }
+
+     function perform_on_selected(e) {
+         [parent_class, action_name, this_class, http_verb, rest] = e.target.id.split('-');
+         var infobox_url, form_url;
+         if(parent_class === 'new') {
+             form_url = $(e.target).attr('data-form-url');
+         } else {
+             var active_row = $('tr.table-success');
+             infobox_url = $(active_row).attr('data-infobox-url');
+             form_url = $(active_row).attr('data-form-url');
+         }
+         var api_url = compute_api_url(form_url, parent_class, this_class, http_verb)
+         if(http_verb === 'POST' && parent_class !== 'new') {
+             form_url = api_url + 'form/'
+         }
+         if (e.target.id === 'taxon-edit-verification-POST-taxon') {
+             form_url = "/url/verification-post-form-bare"
+         }
+         var modal_form = $('#modal-form-' + action_name);
+         var modal_form_body = $(modal_form).find('.modal-body');
+         $(modal_form).find('.modal-title').empty();
+         $(modal_form).find('.modal-title').append(this_class);
+         $(modal_form_body).empty();
+         $.getJSON(form_url, function(data) {
+             $(modal_form_body).append($(data.form));
+             jQuery.each($(modal_form), function(i, modal) {
+                 $(modal).find('.django-select2').djangoSelect2({
+                     dropdownParent: $(modal)
+                 });
+             });
+             $("select.django-select2-heavy").attr('data-minimumInputLength', 2)
+             $("select.django-select2-heavy").attr('data-minimum-input-length', 2)
+             $("select.django-select2-heavy").attr('data-response-length-threshold', '20')
+             // show the form
+             $(modal_form).modal();
+             // stretch width of elements to new size of modal
+             $('.modal td select').css({width: '100%'})
+             $('.modal td span').css({width: '100%'})
+         });
+         // set the 'proceed' callback
+         $(modal_form).find('button.action-confirm').unbind('click');
+         $(modal_form).find('button.action-confirm').click(
+             partial(function(form, verb, api_url, e2){
+                 $.ajax({
+                     url: api_url,
+                     method: verb,
+                     data:$(form).serialize(),
+                     beforeSend: function (request) {
+                         request.setRequestHeader('X-CSRFToken', csrf_token);
+                     },
+                     success: function(result) {
+                         if (verb === 'DELETE') {
+                             $('tr.table-success').hide()
+                         } else {
+                             $.getJSON(api_url + 'markup/', function(item) {
+                                 // update current row
+                                 $('tr.table-success td:first').remove();
+                                 $('tr.table-success').prepend(
+                                     $(twolinestemplate.format(item.twolines)));
+                                 // update infobox
+                                 update_infobox(api_url + 'infobox/')
+                             })
+                         }
+                     },
+                     error: function(request, msg, error) {
+                         console.log(request, msg, error);
+                         // handle failure
+                     }
+                 });
+             }, $(modal_form).find('form'), http_verb, api_url));
+     }
+
+     function getCookie(name) {
+         var cookieValue = null;
+         if (document.cookie && document.cookie !== '') {
+             var cookies = document.cookie.split(';');
+             for (var i = 0; i < cookies.length; i++) {
+                 var cookie = cookies[i].trim();
+                 // Does this cookie string begin with the name we want?
+                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                     break;
+                 }
+             }
+         }
+         return cookieValue;
+     }
+
+     function reset_results_height() {
+         // collect the elements, get their height, sum the values, assign the rest to the results box
+         var stealing = $('.stealing-height-from-results').map(function (i, x) { return parseInt($(x).css('height'))})
+         var stolen = Object.values(stealing).slice(0, stealing.length).reduce((t, i) => t + i + 2)
+         $('#locked-height-container > div').css('height', '{}px'.format(window.innerHeight - stolen))
+     }
+
+     function switch_page(e) {
+         tokens = {};
+         $.getJSON("{% url 'drop-token' '__all__' %}", function(data) {});
+         var appname = $(e.delegateTarget).data('app-name')
+         $('div.pager-page').hide()
+         $('div#home-page').show()
+         $('div#home-spare img').hide()
+         $('div#home-spare img#{}-logo'.format(appname)).show()
+     }
+
+     function link_statistics_to_searches() {
+         $('#home-page table td').css('width', 'unset');
+         $('#home-page table td.list-group-item-action').map(function (i, x) {
+             $(x).click(partial(replace_search_filter, $(x).data('query')));
+         });
+     }
+
+     function update_statistics() {
+         $('#home-page table td').map(function (i, x) {
+             $.getJSON("/url/count?q=" + $(x).data('query'),
+                       function(data){
+                           $(x).text(data['__total__'])
+                       });
+         })
+     }
+
+     function isScrolledIntoView(elem) {
+         var rect = $(elem)[0].getBoundingClientRect();
+         // Only completely visible elements return true:
+         return (rect.top >= 122) && (rect.bottom <= window.innerHeight);
+     }
+
+     function checkKey(e) {
+         e = e || window.event;
+         console.log(e.keyCode);
+         if (e.ctrlKey)
+             switch (e.keyCode) {
+                 case 76:  // L
+                     $('input#search-filter').focus();
+                 case 75:  // K
+                     return false;
+                 case 65:  // A
+                     return (!$(document.activeElement).hasClass('container-fluid'));
+                 default:
+                     return true;
+             }
+         if(!$(document.activeElement).hasClass('container-fluid'))
+             return;
+         var move_to;
+         if(e.keyCode === 37) {
+             move_to = $('tr.table-success').prev()
+         } else if (e.keyCode === 39) {
+             move_to = $('tr.table-success').next()
+         };
+         if(move_to && move_to.length !== 0) {
+             $(move_to).trigger('click');
+             if(!isScrolledIntoView(move_to))
+                 $(move_to)[0].scrollIntoView(e.keyCode === 37);
+         }
+     }
+
+     $(function() {  // run at document ready
+         $('#search-filter').on('keypress', function (e) {
+             if(e.which === 13) {
+                 lookup(e);
+             }
+         });
+         csrf_token = getCookie('csrftoken');
+         pictures_window = window.open(undefined, 'pictures');
+         document.onkeydown = checkKey;
+         $('#search-filter-button').click(lookup);
+         search_history = [];
+         forward_history = [];
+         $('#pop-from-history').click(partial(follow_history, search_history, forward_history));
+         $('#forward-in-history').click(partial(follow_history, forward_history, search_history));
+         $('#clean-history').click(clean_history);
+
+         $('i.pager-go-home').click(switch_page)
+         $('div.pager-page').hide()
+         $('div#home-page').show()
+
+         $("body").bind('contextmenu', function (e) {
+             e.preventDefault(); // prevents default menu
+         });
+         // register action on modal activation
+         $('#drop-insert,.context-menu.dropdown-menu').find('.dropdown-item').click(perform_on_selected);
+
+         link_statistics_to_searches()
+         update_statistics()
+         $('div#home-spare img').hide()
+         $('div#home-spare img#ghini-logo').show()
+
+         $('div#results-page .row.progress').hide()
+
+         // keep track of height
+         window.addEventListener("resize", reset_results_height)
+         reset_results_height()
+     });
+    </script>
+  </head>
+  <body class="container-fluid">
+    <nav class="navbar navbar-expand-sm bg-light navbar-light stealing-height-from-results">
+      <!-- Brand -->
+      <i class="navbar-brand pager-go-home" data-app-name="taxasoft" href="#"><img src="/static/images/taxasoft-32.png"/></i>
+      <i class="navbar-brand pager-go-home" data-app-name="ghini" href="#"><img src="/static/images/ghini-32.png"/></i>
+
+      <!-- Links -->
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item dropdown" id="drop-insert" >
+          <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">Insert</a>
+          <div class="dropdown-menu" id="insert-menu">
+            <a class="dropdown-item" id="new-edit-taxon-POST" href="#" data-form-url="/url/taxon-post-form">Taxon</a>
+            <a class="dropdown-item" id="new-edit-contact-POST" href="#" data-form-url="/url/contact-post-form">Contact</a>
+            <a class="dropdown-item" id="new-edit-accession-POST" href="#" data-form-url="/url/accession-post-form">Accession</a>
+            <a class="dropdown-item" id="new-edit-location-POST" href="#" data-form-url="/url/location-post-form">Location</a>
+          </div>
+        </li>
+        <li class="nav-item dropdown" id="drop-tools" >
+          <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">Tools</a>
+          <div class="dropdown-menu" id="tools-menu">
+            <a class="dropdown-item" href="#">Institution</a>
+            <a class="dropdown-item" href="#">Backup</a>
+            <a class="dropdown-item" href="#">Import</a>
+            <a class="dropdown-item" href="#">Export</a>
+            <a class="dropdown-item" href="#">Report</a>
+          </div>
+        </li>
+
+        <!-- Dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="drop-tags" data-toggle="dropdown">Tags</a>
+          <div class="dropdown-menu" id="tags-menu">
+            <a class="dropdown-item" href="#">Apply Tag</a>
+          </div>
+        </li>
+      </ul>
+      <div class="navbar-nav col-sm-8">
+        <div class="input-group">
+          <button class="btn btn-light" id="pop-from-history">
+            <span class="fa fa-arrow-left"></span>
+          </button>
+          <button class="btn btn-light" id="forward-in-history">
+            <span class="fa fa-arrow-right"></span>
+          </button>
+          <button class="btn btn-light" id="clean-history">
+            <span class="fa fa-paint-brush"></span>
+          </button>
+          <span class="btn-separator"></span>
+          <input type="text" class="form-control" id="search-filter" placeholder="your garden search">
+          <div class="input-group-append">
+            <button class="btn btn-success" id="search-filter-button">
+              <span class="fa fa-refresh"></span>
+            </button>
+          </div>
+          <div class="input-group-append">
+            <button class="btn btn-success" id="query-builder-button">
+              <span class="fa fa-gears"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </nav>
+
+    <div class="pager-container">
+      <div class="pager-page" id="results-page">
+        <div style="position:fixed;z-index:999;height:0.5rem;width:100%" class="row progress">
+          <div class="progress-bar Taxon" style="width:0%"></div>
+          <div class="progress-bar bg-info Accession" style="width:0%"></div>
+          <div class="progress-bar bg-warning Contact" style="width:0%"></div>
+          <div class="progress-bar bg-success Plant" style="width:0%"></div>
+          <div class="progress-bar bg-light Location" style="width:0%"></div>
+        </div>
+        <div class="row">
+          <div class="col-7 stealing-height-from-results">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>results list</th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+          <div class="col-5">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>info box for selected row</th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+        </div>
+
+        <div class="row" id="locked-height-container">
+          <div class="col-7" style="overflow-y:scroll" id="results-box">
+            <table class="table table-hover">
+              <tbody class="Taxon">
+              </tbody>
+              <tbody class="Accession">
+              </tbody>
+              <tbody class="Contact">
+              </tbody>
+              <tbody class="Plant">
+              </tbody>
+              <tbody class="Location">
+              </tbody>
+            </table>
+          </div>
+          <div class="col-5" style="overflow-y:scroll">
+            <h5 id="infobox-object-text"></h5>
+            <table class="table" id="infobox-table">
+              <tbody id="infobox-main-tbody">
+              </tbody>
+              <tbody id="infobox-rac-tbody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12 stealing-height-from-results">
+            http://ghini.github.io/
+          </div>
+        </div>
+      </div>
+
+      <div class="container pager-page" id="home-page">
+        <div class="row justify-content-center">
+          <div class="col-7 align-self-center" id="home-spare">
+            <img class="rounded img-fluid align-middle" id="ghini-logo" src="/static/images/ghini-logo.png">
+            <img class="rounded img-fluid" id="taxasoft-logo" src="/static/images/taxasoft-logo.png">
+          </div>
+          <div class="col-5">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th width="25%"></th>
+                  <th width="25%">total</th>
+                  <th width="25%">used</th>
+                  <th width="25%">unused</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>family +</th>
+                  <td id="count-family-total" data-query="taxon where rank.id<=9">0000</td>
+                  <td class="list-group-item-action" id="count-family-used" data-query="taxon where rank.id<=9 and count(verifications)>0">0000</td>
+                  <td id="count-family-unused" data-query="taxon where rank.id<=9 and count(verifications)=0">0000</td>
+                </tr>
+                <tr>
+                  <th>genus ±</th>
+                  <td id="count-genus-total" data-query="taxon where rank.id between 10 and 16">0000</td>
+                  <td class="list-group-item-action" id="count-genus-used" data-query="taxon where rank.id between 10 and 16 and count(verifications)>0">0000</td>
+                  <td id="count-genus-unused" data-query="taxon where rank.id between 10 and 16 and count(verifications)=0">0000</td>
+                </tr>
+                <tr>
+                  <th>species -</th>
+                  <td class="list-group-item-action" id="count-species-total" data-query="taxon where rank.id>=17">0000</td>
+                  <td class="list-group-item-action" id="count-species-used" data-query="taxon where rank.id>=17 and count(verifications)>0">0000</td>
+                  <td class="list-group-item-action" id="count-species-unused" data-query="taxon where rank.id>=17 and count(verifications)=0">0000</td>
+                </tr>
+                <tr>
+                  <th>accessions</th>
+                  <td class="list-group-item-action" id="count-accession-total" data-query="accession where true">0000</td>
+                  <td class="list-group-item-action" id="count-accession-used" data-query="accession where sum(plants.quantity)>0">0000</td>
+                  <td class="list-group-item-action" id="count-accession-unused" data-query="accession where not sum(plants.quantity)>0">0000</td>
+                </tr>
+                <tr>
+                  <th>plants</th>
+                  <td class="list-group-item-action" id="count-plant-total" data-query="plant where true">0000</td>
+                  <td class="list-group-item-action" id="count-plant-used" data-query="plant where quantity>0">0000</td>
+                  <td class="list-group-item-action" id="count-plant-unused" data-query="plant where quantity=0">0000</td>
+                </tr>
+                <tr>
+                  <th>locations</th>
+                  <td class="list-group-item-action" id="count-location-total" data-query="location where true">0000</td>
+                  <td class="list-group-item-action" id="count-location-used" data-query="location where count(plants)>0">0000</td>
+                  <td class="list-group-item-action" id="count-location-unused" data-query="location where count(plants)=0">0000</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="forms-and-menus">
+
+      <!-- first of a list of objects object where the id indicates what the object does.
+           id is made up of four parts, it's:
+           (1) the class name of the root object, the one to which the edit is related.
+           compare with the above drop down menu, where this part is 'new';
+           (2) a verb, identifying the form that has to be activated, it's either edit or delete;
+           (3) the class name of the object we will edit, it helps us locate the table that we need copy into the form;
+           (4) the http verb to be executed if the form is confirmed.
+           (5) this one is optional, I'm not sure we need it, possibly just for unicity.
+
+           $('.context-menu.dropdown-menu').find('.dropdown-item').map((i, e) => [e.id.split('-')])
+           $('#drop-insert').find('.dropdown-item').map((i, e) => [e.id.split('-')])
+      -->
+      <div id="ContextMenu-Taxon" class="context-menu dropdown-menu">
+        <a class="dropdown-item" id="taxon-edit-taxon-PUT" href="#">Edit</a>
+        <a class="dropdown-item" id="taxon-edit-taxon-POST-taxon" href="#">Add sub taxon</a>
+        <a class="dropdown-item" id="taxon-edit-verification-POST-taxon" href="#">Add verification</a>
+        <a class="dropdown-item" id="taxon-delete-taxon-DELETE" href="#">Delete</a>
+      </div>
+
+      <div id="ContextMenu-Accession" class="context-menu dropdown-menu">
+        <a class="dropdown-item" id="accession-edit-accession-PUT" href="#">Edit</a>
+        <a class="dropdown-item" id="accession-edit-verification-POST" href="#">Add verification</a>
+        <a class="dropdown-item" id="accession-edit-plant-POST" href="#">Add Plant</a>
+        <a class="dropdown-item" id="accession-delete-accession-DELETE" href="#">Delete</a>
+      </div>
+
+      <div id="ContextMenu-Contact" class="context-menu dropdown-menu">
+        <a class="dropdown-item" id="contact-edit-contact-PUT" href="#">Edit</a>
+        <a class="dropdown-item" id="contact-edit-verification-POST" href="#">Add verification</a>
+        <a class="dropdown-item" id="contact-delete-contact-DELETE" href="#">Delete</a>
+      </div>
+
+      <div id="ContextMenu-Plant" class="context-menu dropdown-menu">
+        <a class="dropdown-item" id="plant-edit-plant-PUT" href="#">Edit</a>
+        <a class="dropdown-item" id="plant-edit-plant-POST-split" href="#">Split Plant</a>
+        <a class="dropdown-item" id="plant-delete-plant-DELETE" href="#">Delete</a>
+      </div>
+
+      <div id="ContextMenu-Location" class="context-menu dropdown-menu">
+        <a class="dropdown-item" id="location-edit-location-PUT" href="#">Edit</a>
+        <a class="dropdown-item" id="location-delete-location-DELETE" href="#">Delete</a>
+      </div>
+
+      <!-- we only have two modal forms: delete and edit. -->
+      <div class="modal" id="modal-form-delete">
+        <div class="modal-dialog modal-sm">
+          <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+              <h4 class="modal-title">Confirm Deletion</h4>
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- Modal body -->
+            <div class="modal-body" id="modal-delete-tbody">
+
+            </div>
+
+            <!-- Modal footer -->
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-danger action-confirm" data-dismiss="modal">Delete</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="modal" id="modal-form-edit">
+        <div class="modal-dialog modal-lg">
+          <form class="modal-content">
+            {% csrf_token %}
+
+            <!-- Modal Header --><!-- we change the title -->
+            <div class="modal-header">
+              <h4 class="modal-title"></h4>
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <!-- Modal body --><!-- we clone the generated form into this element -->
+            <div class="modal-body">
+
+            </div>
+
+            <!-- Modal footer --><!-- we change the primary action -->
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary action-confirm" data-dismiss="modal">Save</button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
