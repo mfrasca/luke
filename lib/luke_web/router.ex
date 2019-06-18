@@ -32,5 +32,6 @@ defmodule LukeWeb.Router do
   scope "/url", LukeWeb do
     pipe_through :api
 
+    get "/count", CountController, :index
   end
 end
