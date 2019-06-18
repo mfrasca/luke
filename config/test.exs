@@ -12,8 +12,8 @@ config :logger, level: :warn
 # Configure your database
 config :luke, Luke.Repo,
   adapter: Ecto.Adapters.Postgres,
-  username: "postgres",
-  password: "postgres",
+  username: "auth0",
+  password: "postgreex",
   database: "luke_test",
   hostname: "localhost",
   pool: Ecto.Adapters.SQL.Sandbox

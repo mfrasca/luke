@@ -20,7 +20,17 @@ defmodule LukeWeb.Router do
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", LukeWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", LukeWeb do
+    pipe_through :api
+    resources "/taxon", TaxonController
+    resources "/accession", AccessionController
+    resources "/plant", PlantController
+    resources "/location", LocationController
+  end
+
+  # Other scopes may use custom stacks.
+  scope "/url", LukeWeb do
+    pipe_through :api
+
+  end
 end

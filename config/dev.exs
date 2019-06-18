@@ -51,8 +51,8 @@ config :phoenix, :stacktrace_depth, 20
 # Configure your database
 config :luke, Luke.Repo,
   adapter: Ecto.Adapters.Postgres,
-  username: "postgres",
-  password: "postgres",
+  username: "auth0",
+  password: "postgreex",
   database: "luke_dev",
   hostname: "localhost",
   pool_size: 10
