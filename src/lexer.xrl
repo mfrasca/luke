@@ -7,9 +7,19 @@ Rules.
 %% a number
 [0-9]+ : {token, {number, TokenLine, list_to_integer(TokenChars)}}.
 
+%% comparison operators
+= : {token, {cmp_eq, TokenLine}}.
+!= : {token, {cmp_ne, TokenLine}}.
+< : {token, {cmp_lt, TokenLine}}.
+> : {token, {cmp_gt, TokenLine}}.
+<= : {token, {cmp_le, TokenLine}}.
+>= : {token, {cmp_ge, TokenLine}}.
+
 %% open/close parens
 \( : {token, {'(', TokenLine}}.
 \) : {token, {')', TokenLine}}.
+\[ : {token, {'[', TokenLine}}.
+\] : {token, {']', TokenLine}}.
 
 %% arithmetic operators
 \. : {token, {'.', TokenLine}}.
