@@ -1,30 +1,28 @@
 Definitions.
 
-AND     = and
-OR      = or
-NOT     = not
+WORD    = [a-z][a-z0-9_]*
 
 Rules.
 
 %% a number
 [0-9]+ : {token, {number, TokenLine, list_to_integer(TokenChars)}}.
 
-%% an OID
-\[[0-9]+(\.[0-9]+)*\] : {token, {oid, TokenLine, oid(TokenChars)}}.
-
 %% open/close parens
 \( : {token, {'(', TokenLine}}.
 \) : {token, {')', TokenLine}}.
 
 %% arithmetic operators
-\+ : {token, {'+', TokenLine}}.
-\- : {token, {'-', TokenLine}}.
-\* : {token, {'*', TokenLine}}.
-\/ : {token, {'/', TokenLine}}.
+\. : {token, {'.', TokenLine}}.
 
-{AND} : {token, {boolean_mult, TokenLine}}.
-{OR} : {token, {boolean_add, TokenLine}}.
-{NOT} : {token, {boolean_negate, TokenLine}}.
+and     : {token, {boolean_mult, TokenLine}}.
+or      : {token, {boolean_add, TokenLine}}.
+not     : {token, {boolean_negate, TokenLine}}.
+where   : {token, {where, TokenLine}}.
+true    : {token, {true, TokenLine}}.
+false   : {token, {false, TokenLine}}.
+between : {token, {between, TokenLine}}.
+{WORD}  : {token, {word, TokenLine, TokenChars}}.
+
 
 %% white space
 [\s\n\r\t]+           : skip_token.

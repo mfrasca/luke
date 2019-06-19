@@ -1,8 +1,7 @@
 Nonterminals query domain fieldname expression bterm bfactor valuelist field aggregate operator terms value.
-Terminals number '+' '-' '*' '/' '(' ')' '.' '[' ']' where word or and false true not in integer quoted squoted.
+Terminals number '(' ')' '.' '[' ']' where word or and not false true in integer quoted squoted.
 Rootsymbol query.
 
-query -> number : '$1'.
 %query -> domain '.' fieldname operator value
 %query -> domain '=' value
 %query -> query '|' DEPEND
