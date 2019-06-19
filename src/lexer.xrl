@@ -8,12 +8,18 @@ Rules.
 [0-9]+ : {token, {number, TokenLine, list_to_integer(TokenChars)}}.
 
 %% comparison operators
-= : {token, {cmp_eq, TokenLine}}.
-!= : {token, {cmp_ne, TokenLine}}.
-< : {token, {cmp_lt, TokenLine}}.
-> : {token, {cmp_gt, TokenLine}}.
-<= : {token, {cmp_le, TokenLine}}.
->= : {token, {cmp_ge, TokenLine}}.
+= : {token, {operator, TokenLine, cmp_eq}}.
+!= : {token, {operator, TokenLine, cmp_ne}}.
+< : {token, {operator, TokenLine, cmp_lt}}.
+> : {token, {operator, TokenLine, cmp_gt}}.
+<= : {token, {operator, TokenLine, cmp_le}}.
+>= : {token, {operator, TokenLine, cmp_ge}}.
+like     : {token, {operator, TokenLine, cmp_like}}.
+contains : {token, {operator, TokenLine, cmp_contains}}.
+
+%% aggregate functions
+count : {token, {aggregate, TokenLine, f_count}}.
+add : {token, {aggregate, TokenLine, f_add}}.
 
 %% open/close parens
 \( : {token, {'(', TokenLine}}.
