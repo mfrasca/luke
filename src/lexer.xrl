@@ -1,4 +1,9 @@
 Definitions.
+
+AND     = and
+OR      = or
+NOT     = not
+
 Rules.
 
 %% a number
@@ -16,6 +21,10 @@ Rules.
 \- : {token, {'-', TokenLine}}.
 \* : {token, {'*', TokenLine}}.
 \/ : {token, {'/', TokenLine}}.
+
+{AND} : {token, {boolean_mult, TokenLine}}.
+{OR} : {token, {boolean_add, TokenLine}}.
+{NOT} : {token, {boolean_negate, TokenLine}}.
 
 %% white space
 [\s\n\r\t]+           : skip_token.
