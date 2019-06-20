@@ -14,15 +14,15 @@ Rules.
 > : {token, {operator, TokenLine, '>'}}.
 <= : {token, {operator, TokenLine, '>='}}.
 >= : {token, {operator, TokenLine, '<='}}.
-like     : {token, {operator, TokenLine, cmp_like}}.
-contains : {token, {operator, TokenLine, cmp_contains}}.
+like     : {token, {operator, TokenLine, 'ilike'}}.
+%contains : {token, {operator, TokenLine, cmp_contains}}.
 
 %% inclusion
 in       : {token, {cmp_in, TokenLine}}.
 
 %% aggregate functions
-count : {token, {aggregate, TokenLine, f_count}}.
-add : {token, {aggregate, TokenLine, f_add}}.
+count : {token, {aggregate, TokenLine, count}}.
+sum   : {token, {aggregate, TokenLine, sum}}.
 
 %% open/close parens
 \( : {token, {'(', TokenLine}}.

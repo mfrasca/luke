@@ -17,11 +17,11 @@ bfactor -> not bfactor : {atom_not, '$2'}.
 bfactor -> '(' expression ')' : '$2'.
 bfactor -> false : false.
 bfactor -> true : true.
-bfactor -> field operator value : {extract_value('$2'), '$1', '$3'}.
-bfactor -> aggregate '(' field ')' operator value : {extract_value('$5'), remove_line('$1'), '$3', '$6'}.
+bfactor -> field operator value : {extract_value('$2'), [{context, 'Elixir'}, {import, 'Elixir.Kernel'}], ['$1', '$3']}.
+bfactor -> aggregate '(' field ')' operator value : {extract_value('$5'), [{context, 'Elixir'}, {import, 'Elixir.Kernel'}], [{extract_value('$1'), [], ['$3']}, '$6']}.
 valuelist -> value : [ '$1' ].
 valuelist -> value valuelist : [ '$1' | '$2' ].
-bfactor -> field cmp_in '[' valuelist ']' : {in, '$1', '$4'}.
+bfactor -> field cmp_in '[' valuelist ']' : {in, [{context, 'Elixir'}, {import, 'Elixir.Kernel'}], ['$1', '$4']}.
 %bfactor -> field not in '[' valuelist ']'
 %bfactor -> field BETWEEN value AND value
 fieldname -> word : extract_value('$1').
