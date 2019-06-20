@@ -8,12 +8,12 @@ Rules.
 [0-9]+ : {token, {number, TokenLine, list_to_integer(TokenChars)}}.
 
 %% comparison operators
-= : {token, {operator, TokenLine, cmp_eq}}.
-!= : {token, {operator, TokenLine, cmp_ne}}.
-< : {token, {operator, TokenLine, cmp_lt}}.
-> : {token, {operator, TokenLine, cmp_gt}}.
-<= : {token, {operator, TokenLine, cmp_le}}.
->= : {token, {operator, TokenLine, cmp_ge}}.
+= : {token, {operator, TokenLine, '=='}}.
+!= : {token, {operator, TokenLine, '!='}}.
+< : {token, {operator, TokenLine, '<'}}.
+> : {token, {operator, TokenLine, '>'}}.
+<= : {token, {operator, TokenLine, '>='}}.
+>= : {token, {operator, TokenLine, '<='}}.
 like     : {token, {operator, TokenLine, cmp_like}}.
 contains : {token, {operator, TokenLine, cmp_contains}}.
 
