@@ -1,6 +1,6 @@
 Definitions.
 
-WORD    = [a-z][a-z0-9_]*
+WORD    = [a-zA-Z][A-Za-z0-9_]*
 
 Rules.
 
@@ -16,6 +16,9 @@ Rules.
 >= : {token, {operator, TokenLine, cmp_ge}}.
 like     : {token, {operator, TokenLine, cmp_like}}.
 contains : {token, {operator, TokenLine, cmp_contains}}.
+
+%% inclusion
+in       : {token, {cmp_in, TokenLine}}.
 
 %% aggregate functions
 count : {token, {aggregate, TokenLine, f_count}}.
@@ -38,6 +41,8 @@ true    : {token, {true, TokenLine}}.
 false   : {token, {false, TokenLine}}.
 between : {token, {between, TokenLine}}.
 {WORD}  : {token, {word, TokenLine, TokenChars}}.
+'[^']*'  : {token, {quoted, TokenLine, TokenChars}}.
+"[^"]*"  : {token, {quoted, TokenLine, TokenChars}}.
 
 
 %% white space
